@@ -1,5 +1,5 @@
 'use strict';
-function TodoListController($scope, $http) {
+function TodoListController($scope, $http, $timeout) {
   $scope.todos = [];
 
   $scope.newTodo = {
@@ -11,14 +11,41 @@ function TodoListController($scope, $http) {
   $scope.notDoneFilter = {done: false};
 
   $scope.setTodos = function (todos) {
-    console.log(todos);
     $scope.todos = todos;
   };
 
   $scope.addNewTodo = function () {
     $http.post('/todo.json', $scope.newTodo).success(function (data) {
-      $scope.todos = data.todos;
-      $scope.newTodo.description = '';
+      if (data.todo) {
+        $scope.todos.push(data.todo);
+        $scope.newTodo.description = '';
+      } else {
+        console.log(JSON.stringify(data));
+      }
     });
   };
+
+  $scope.update = function (todo) {
+    $http.put('/todo/' + todo._id + '.json', todo).success(function (data) {
+      if (!data.todo) {
+        console.log(JSON.stringify(data));
+      }
+    });
+  };
+
+  $scope.updateList = function () {
+    $http.get('/todos.json').success(function (data) {
+      $scope.todos = data.todos;
+    });
+
+    $timeout(function () {
+      $scope.updateList();
+    }, 30 * 60 * 1000);
+  };
+
+  $timeout(function () {
+    $scope.updateList();
+  }, 30 * 60 * 1000);
+
+  $scope.updateList();
 }
